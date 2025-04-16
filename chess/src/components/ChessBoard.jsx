@@ -286,61 +286,84 @@ const ChessBoard = () => {
     setGameStatus(null);
   };
 
+
   return (
-    <div className="flex flex-row items-start space-x-8">
-      <div className="mb-4">
-        <label className="mr-2 font-semibold">Game Mode:</label>
-        <select value={gameMode} onChange={(e) => setGameMode(e.target.value)} className="p-1 border rounded">
-          <option value="2P">2 Players</option>
-          <option value="vsComputer">Play vs Computer</option>
-        </select>
+    <div className="flex flex-col items-center space-y-4">
+      {/* Black Captures - Top */}
+      <div className="captured-pieces flex flex-row justify-center space-x-2">
+        {capturedBlack.map((p, idx) => (
+          <span key={idx} className="text-xl">{p}</span>
+        ))}
       </div>
-
-      <div className="flex flex-col items-center">
-        <div className="text-sm font-semibold mb-2">Black Captures</div>
-        <div className="captured-pieces">{capturedBlack.map((p, idx) => <div key={idx}>{p}</div>)}</div>
-      </div>
-
-      <div className="flex flex-col items-center space-y-4">
-        <div className="turn-indicator">Turn: {turn}</div>
-        <div className="chessboard">
-          {board.map((row, i) => row.map((piece, j) => {
-            const isLight = (i + j) % 2 === 0;
-            const isSelected = selected && selected.row === i && selected.col === j;
-            return (
-              <div
-                key={`${i}-${j}`}
-                className={`square ${isLight ? "light" : "dark"} ${isSelected ? "selected" : ""}`}
-                onClick={() => handleSquareClick(i, j)}
-              >
-                {piece && <span className={isWhitePiece(piece) ? "white-piece" : "black-piece"}>{piece}</span>}
-              </div>
-            );
-          }))}
+  
+      <div className="flex flex-row items-start space-x-8">
+        {/* Game Mode Selector */}
+        <div className="mb-4">
+          <label className="mr-2 font-semibold">Game Mode:</label>
+          <select
+            value={gameMode}
+            onChange={(e) => setGameMode(e.target.value)}
+            className="p-1 border rounded"
+          >
+            <option value="2P">2 Players</option>
+            <option value="vsComputer">Play vs Computer</option>
+          </select>
         </div>
-
-        <button onClick={resetGame} className="mt-4 p-2 bg-blue-500 text-white rounded">Reset Game</button>
-
-        {gameStatus === "checkmate" && (
-          <div className="mt-4 text-red-600 font-bold">
-            Checkmate! {lastMoved === "white" ? "White" : "Black"} wins!
+  
+        {/* Board and Status */}
+        <div className="flex flex-col items-center space-y-4">
+          <div className="turn-indicator">Turn: {turn}</div>
+          <div className="chessboard">
+            {board.map((row, i) =>
+              row.map((piece, j) => {
+                const isLight = (i + j) % 2 === 0;
+                const isSelected = selected && selected.row === i && selected.col === j;
+                return (
+                  <div
+                    key={`${i}-${j}`}
+                    className={`square ${isLight ? "light" : "dark"} ${isSelected ? "selected" : ""}`}
+                    onClick={() => handleSquareClick(i, j)}
+                  >
+                    {piece && (
+                      <span className={isWhitePiece(piece) ? "white-piece" : "black-piece"}>
+                        {piece}
+                      </span>
+                    )}
+                  </div>
+                );
+              })
+            )}
           </div>
-        )}
-        {gameStatus === "check" && (
-          <div className="mt-4 text-yellow-600 font-bold">
-            {turn === "white" ? "White" : "Black"} is in check!
-          </div>
-        )}
-        
-
+  
+          <button
+            onClick={resetGame}
+            className="mt-4 p-2 bg-blue-500 text-white rounded"
+          >
+            Reset Game
+          </button>
+  
+          {gameStatus === "checkmate" && (
+            <div className="mt-4 text-red-600 font-bold">
+              Checkmate! {lastMoved === "white" ? "White" : "Black"} wins!
+            </div>
+          )}
+          {gameStatus === "check" && (
+            <div className="mt-4 text-yellow-600 font-bold">
+              {turn === "white" ? "White" : "Black"} is in check!
+            </div>
+          )}
+        </div>
       </div>
-
-      <div className="flex flex-col items-center">
-        <div className="text-sm font-semibold mb-2">White Captures</div>
-        <div className="captured-pieces">{capturedWhite.map((p, idx) => <div key={idx}>{p}</div>)}</div>
+  
+      {/* White Captures - Bottom */}
+      <div className="captured-pieces flex flex-row justify-center space-x-2">
+        {capturedWhite.map((p, idx) => (
+          <span key={idx} className="text-xl">{p}</span>
+        ))}
       </div>
     </div>
   );
 };
+  
 
 export default ChessBoard;

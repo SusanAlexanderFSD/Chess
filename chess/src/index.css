@@ -13,7 +13,7 @@ body {
   width: 480px;
   height: 480px;
   border: 4px solid #fff;
-  box-shadow: 0 0 15px rgba(18, 97, 35, 0.3);
+  box-shadow: 0 0 15px rgba(61, 36, 21, 0.3);
 }
 
 
@@ -30,12 +30,12 @@ body {
 
 /* Light squares */
 .square.light {
-  background-color: #7be9da; /* Tailwind gray-100 */
+  background-color: #e6a358; /* Tailwind gray-100 */
 }
 
 /* Dark squares */
 .square.dark {
-  background-color: #000000; /* Tailwind green-700 */
+  background-color: #3a2610; /* Tailwind green-700 */
   color: white;
 }
 
@@ -53,13 +53,25 @@ body {
 }
 
 .white-piece {
-  color: green;
+  color: rgb(255, 255, 255);
   font-size: 2.5rem;
 }
 
 .black-piece {
-  color: hotpink;
+  color: rgb(0, 0, 0);
   font-size: 2.5rem;
 }
+
+.captured-pieces-row {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 0.25rem;
+  justify-items: center;
+}
+
+.captured-piece {
+  font-size: 1.5rem;
+}
+
 
 
