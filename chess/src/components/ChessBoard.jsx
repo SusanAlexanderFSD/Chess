@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import "../index.css";
 
-// Initialize the board
+
+
 const initialBoard = () => {
   const emptyRow = Array(8).fill(null);
   const board = Array(8).fill(null).map(() => [...emptyRow]);
@@ -17,6 +18,7 @@ const initialBoard = () => {
   return board;
 };
 
+
 const whitePieces = ["♙", "♖", "♘", "♗", "♕", "♔"];
 const blackPieces = ["♟", "♜", "♞", "♝", "♛", "♚"];
 
@@ -28,6 +30,7 @@ const isOpponentPiece = (target, isWhite) => {
   return isWhite ? isBlackPiece(target) : isWhitePiece(target);
 };
 
+
 const findKing = (board, king) => {
   for (let i = 0; i < 8; i++) {
     for (let j = 0; j < 8; j++) {
@@ -36,6 +39,7 @@ const findKing = (board, king) => {
   }
   return [-1, -1];
 };
+
 
 const isKingInCheck = (board, isWhite) => {
   const king = isWhite ? "♔" : "♚";
@@ -51,6 +55,9 @@ const isKingInCheck = (board, isWhite) => {
   }
   return false;
 };
+
+
+
 
 const isCheckmate = (board, isWhite) => {
   if (!isKingInCheck(board, isWhite)) return false;
@@ -75,6 +82,7 @@ const isCheckmate = (board, isWhite) => {
   return true;
 };
 
+
 const isValidMove = (piece, startRow, startCol, endRow, endCol, isWhite, board) => {
   const targetPiece = board[endRow][endCol];
   if ((isWhite && isWhitePiece(targetPiece)) || (!isWhite && isBlackPiece(targetPiece))) return false;
@@ -98,7 +106,6 @@ const isValidMove = (piece, startRow, startCol, endRow, endCol, isWhite, board) 
 
       // Diagonal capture
       if (Math.abs(dc) === 1 && dr === dir && isOpponentPiece(targetPiece, isWhite)) return true;
-
       return false;
     }
 
@@ -107,19 +114,17 @@ const isValidMove = (piece, startRow, startCol, endRow, endCol, isWhite, board) 
       if (dc === 0) return boardPathClear(board, startRow, startCol, endRow, endCol, "vertical");
       return false;
     }
+
     case "♘": case "♞": return (Math.abs(dr) === 2 && Math.abs(dc) === 1) || (Math.abs(dr) === 1 && Math.abs(dc) === 2);
     case "♗": case "♝": return Math.abs(dr) === Math.abs(dc) && boardPathClear(board, startRow, startCol, endRow, endCol, "diagonal");
-    case "♕": case "♛": return (
-      isValidMove("♖", startRow, startCol, endRow, endCol, isWhite, board) ||
-      isValidMove("♗", startRow, startCol, endRow, endCol, isWhite, board)
-    );
+    
     case "♔": case "♚": {
       if (Math.abs(dr) <= 1 && Math.abs(dc) <= 1) {
         // Simulate the move
         const simulatedBoard = JSON.parse(JSON.stringify(board));
         simulatedBoard[endRow][endCol] = piece;
         simulatedBoard[startRow][startCol] = null;
-
+    
         // Prevent the king from moving into check
         if (!isKingInCheck(simulatedBoard, isWhite)) {
           return true;
@@ -127,10 +132,13 @@ const isValidMove = (piece, startRow, startCol, endRow, endCol, isWhite, board) 
       }
       return false;
     }
-
-    default: return false;
-  }
+    
+    
+    
+  };
 };
+ 
+
 
 const boardPathClear = (board, startRow, startCol, endRow, endCol, type) => {
   const rowStep = endRow > startRow ? 1 : endRow < startRow ? -1 : 0;
@@ -146,93 +154,201 @@ const boardPathClear = (board, startRow, startCol, endRow, endCol, type) => {
   return true;
 };
 
+
 let globalBoard = initialBoard();
 
 const ChessBoard = () => {
   const [board, setBoard] = useState(initialBoard());
   const [selected, setSelected] = useState(null);
   const [turn, setTurn] = useState("white");
-  const [lastMoved, setLastMoved] = useState("white");
+  const [lastMoved, setLastMoved] = useState("white"); // 👈 Add this here
   const [capturedWhite, setCapturedWhite] = useState([]);
   const [capturedBlack, setCapturedBlack] = useState([]);
   const [gameMode, setGameMode] = useState("2P");
   const [gameStatus, setGameStatus] = useState(null);
+  const [validMoves, setValidMoves] = useState([]);
+
 
   useEffect(() => { globalBoard = board; }, [board]);
 
+  const handleSquareClick = (row, col) => {
+    const piece = board[row][col];
+    const isWhite = turn === "white";
+    console.log(`Clicked piece: ${piece}, Turn: ${turn}`);
+    
+    // If the game is over (checkmate or check), return early
+    if (!selected) {
+      if (piece && ((turn === "white" && isWhitePiece(piece)) || (turn === "black" && isBlackPiece(piece)))) {
+        setSelected({ row, col });
+    
+        const moves = [];
+        for (let x = 0; x < 8; x++) {
+          for (let y = 0; y < 8; y++) {
+            if (isValidMove(piece, row, col, x, y, isWhite, board)) {
+              // Simulate move to check if it leaves the king in check
+              const simulatedBoard = board.map(r => [...r]);
+              simulatedBoard[x][y] = piece;
+              simulatedBoard[row][col] = null;
+              if (!isKingInCheck(simulatedBoard, isWhite)) {
+                moves.push([x, y]);
+              }
+            }
+          }
+        }
+    
+        setValidMoves(moves);
+      }
+      return;
+    }
+    
+    
+    // Handle unselecting the piece if it's the same square
+    if (selected.row === row && selected.col === col) {
+      return setSelected(null);
+    }
+    
+    const clickedPiece = board[selected.row][selected.col];
+    const targetPiece = board[row][col];
+    
+    if (isValidMove(clickedPiece, selected.row, selected.col, row, col, isWhite, board)) {
+      const newBoard = board.map(r => [...r]); // Deep clone the board to avoid mutation
+    
+      // Perform the move
+      newBoard[row][col] = clickedPiece;
+      newBoard[selected.row][selected.col] = null;
+    
+      // Handle pawn promotion if applicable
+      console.log(`Checking pawn promotion for piece: ${clickedPiece} at row ${row}, col ${col}`);
+      handlePawnPromotion(row, col, clickedPiece, isWhite, newBoard);
+    
+      // Check if the move results in check or checkmate
+      if (!isKingInCheck(newBoard, isWhite)) {
+        // Update captured pieces
+        if (targetPiece) {
+          isWhite ? setCapturedBlack(prev => [...prev, targetPiece]) : setCapturedWhite(prev => [...prev, targetPiece]);
+        }
+    
+        const opponentIsWhite = !isWhite;
+        const inCheck = isKingInCheck(newBoard, opponentIsWhite);
+        const checkmate = isCheckmate(newBoard, opponentIsWhite);
+    
+        setGameStatus(checkmate ? "checkmate" : inCheck ? "check" : null);
+        setBoard(newBoard);  // Update the board state
+        setSelected(null);
+        setValidMoves([]);
+        setLastMoved(turn);
+        setTurn(turn === "white" ? "black" : "white");
+      } else {
+        setSelected(null);
+      }
+    }
+  };
 
-    // HANDLESQUARECLICK
-
- // Define the pawn promotion function
- const handlePawnPromotion = (row, col, piece, isWhite) => {
-  // Only trigger promotion if it's a pawn reaching the last row
-  if (piece === (isWhite ? "♙" : "♟") && (row === 0 || row === 7)) {
-    const promotedPiece = prompt("Promote pawn to (Q, R, B, N):");
-
-    if (promotedPiece) {
-      // Ensure only valid pieces are selected
+  
+  const handlePawnPromotion = (row, col, piece, isWhite, newBoard) => {
+    // Check if it's a pawn and if it has reached the promotion row (0 for white, 7 for black)
+    if ((isWhite && piece === "♙" && row === 0) || (!isWhite && piece === "♟" && row === 7)) {
+      // Prompt the user for the piece to promote the pawn to
+      const promotedPiece = prompt("Promote pawn to (Q, R, B, N):");
       const validPieces = ["Q", "R", "B", "N"];
-      if (validPieces.includes(promotedPiece.toUpperCase())) {
-        const newBoard = board.map(r => [...r]);
+  
+      // Validate the selected piece
+      if (promotedPiece && validPieces.includes(promotedPiece.toUpperCase())) {
+        // Set the promoted piece at the pawn's position
         newBoard[row][col] = isWhite
-          ? `♕`  // White Queen
-          : `♛`; // Black Queen
-
+          ? (promotedPiece.toUpperCase() === "Q" ? "♕" :
+             promotedPiece.toUpperCase() === "R" ? "♖" :
+             promotedPiece.toUpperCase() === "B" ? "♗" : "♘")
+          : (promotedPiece.toUpperCase() === "Q" ? "♛" :
+             promotedPiece.toUpperCase() === "R" ? "♜" :
+             promotedPiece.toUpperCase() === "B" ? "♝" : "♞");
+  
+        console.log("Board after promotion:", newBoard);
+  
+        // Update the board state with the new promoted piece
         setBoard(newBoard);
       } else {
-        alert("Invalid piece selected!");
+        alert("Invalid piece selected! Choose Q, R, B, or K.");
       }
     }
-  }
-};
+  };
 
-// Your handleSquareClick function
-const handleSquareClick = (row, col) => {
-  if (gameStatus === "checkmate") return;
 
-  const clickedPiece = board[row][col];
-  const isWhite = turn === "white";
+  useEffect(() => {
 
-  if (!selected) {
-    if (clickedPiece && ((turn === "white" && isWhitePiece(clickedPiece)) || (turn === "black" && isBlackPiece(clickedPiece)))) {
-      setSelected({ row, col });
+    if (gameMode === "vsComputer" && turn === "black" && gameStatus !== "checkmate") {
+      const timer = setTimeout(() => makeComputerMove(), 500);
+      return () => clearTimeout(timer);
     }
-    return;
-  }
+  }, [turn, gameMode, gameStatus]);
 
-  if (selected.row === row && selected.col === col) return setSelected(null);
 
-  const piece = board[selected.row][selected.col];
-  const target = board[row][col];
 
-  if (isValidMove(piece, selected.row, selected.col, row, col, isWhite, board)) {
+  const makeComputerMove = () => {
+    const isWhite = false;
+    const moves = [];
+
+
+
+    // Generate all valid moves for black pieces
+
+    for (let i = 0; i < 8; i++) {
+      for (let j = 0; j < 8; j++) {
+        const piece = board[i][j];
+        if (piece && isBlackPiece(piece)) {
+          for (let x = 0; x < 8; x++) {
+            for (let y = 0; y < 8; y++) {
+              if (isValidMove(piece, i, j, x, y, isWhite, board)) {
+
+                // Simulate the move
+
+                const simulatedBoard = JSON.parse(JSON.stringify(board));
+                simulatedBoard[x][y] = piece;
+                simulatedBoard[i][j] = null;
+
+
+
+                // Check if black king is safe after the move
+
+                if (!isKingInCheck(simulatedBoard, false)) {
+                  moves.push({ from: { row: i, col: j }, to: { row: x, col: y } });
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+
+    if (moves.length === 0) return;
+
+
+    const move = moves[Math.floor(Math.random() * moves.length)];
     const newBoard = board.map(r => [...r]);
-    newBoard[row][col] = piece;
-    newBoard[selected.row][selected.col] = null;
+    const movingPiece = board[move.from.row][move.from.col];
+    const target = board[move.to.row][move.to.col];
+    if (target) setCapturedWhite(prev => [...prev, target]);
+    newBoard[move.to.row][move.to.col] = movingPiece;
+    newBoard[move.from.row][move.from.col] = null;
 
-    // Check for pawn promotion
-    handlePawnPromotion(row, col, piece, isWhite);
+    setBoard(newBoard);
 
-    if (!isKingInCheck(newBoard, isWhite)) {
-      if (target) {
-        isWhite ? setCapturedBlack(prev => [...prev, target]) : setCapturedWhite(prev => [...prev, target]);
-      }
 
-      const opponentIsWhite = !isWhite;
+    if (gameMode === "vsComputer") {
+      const opponentIsWhite = false;
       const inCheck = isKingInCheck(newBoard, opponentIsWhite);
       const checkmate = isCheckmate(newBoard, opponentIsWhite);
-
       setGameStatus(checkmate ? "checkmate" : inCheck ? "check" : null);
-      setBoard(newBoard);
-      setSelected(null);
-      setLastMoved(turn);
-      setTurn(turn === "white" ? "black" : "white");
-    } else {
-      setSelected(null);
     }
-  }
-};
-    
+
+
+
+    const inCheck = isKingInCheck(newBoard, true);
+    setGameStatus(inCheck ? (isCheckmate(newBoard, true) ? "checkmate" : "check") : null);
+    setTurn("white");
+    setLastMoved("black");
+  };
 
 
   const resetGame = () => {
@@ -246,15 +362,21 @@ const handleSquareClick = (row, col) => {
     setGameStatus(null);
   };
 
+
+
   return (
     <div className="flex flex-col items-center space-y-4">
+      {/* Black Captures - Top */}
       <div className="captured-pieces flex flex-row justify-center space-x-2">
         {capturedBlack.map((p, idx) => (
           <span key={idx} className="text-xl">{p}</span>
         ))}
       </div>
 
+
+  
       <div className="flex flex-row items-start space-x-8">
+        {/* Game Mode Selector */}
         <div className="mb-4">
           <label className="mr-2 font-semibold">Game Mode:</label>
           <select
@@ -262,33 +384,41 @@ const handleSquareClick = (row, col) => {
             onChange={(e) => setGameMode(e.target.value)}
             className="p-1 border rounded"
           >
+
+
             <option value="2P">2 Players</option>
             <option value="vsComputer">Play vs Computer</option>
           </select>
-        </div>
+       </div>
+
+
+  
+        {/* Board and Status */}
 
         <div className="flex flex-col items-center space-y-4">
           <div className="turn-indicator">Turn: {turn}</div>
           <div className="chessboard">
-            {board.map((row, i) =>
-              row.map((piece, j) => {
-                const isLight = (i + j) % 2 === 0;
-                const isSelected = selected && selected.row === i && selected.col === j;
-                return (
-                  <div
-                    key={`${i}-${j}`}
-                    className={`square ${isLight ? "light" : "dark"} ${isSelected ? "selected" : ""}`}
-                    onClick={() => handleSquareClick(i, j)}
-                  >
-                    {piece && (
-                      <span className={isWhitePiece(piece) ? "white-piece" : "black-piece"}>
-                        {piece}
-                      </span>
-                    )}
-                  </div>
-                );
-              })
-            )}
+          {board.map((row, i) =>
+            row.map((piece, j) => {
+              const isLight = (i + j) % 2 === 0;
+              const isSelected = selected && selected.row === i && selected.col === j;
+              const isValidMoveSquare = validMoves.some(([r, c]) => r === i && c === j); // ✅ Add here
+
+              return (
+                <div
+                  key={`${i}-${j}`}
+                  className={`square ${isLight ? "light" : "dark"} ${isSelected ? "selected" : ""} ${isValidMoveSquare ? "highlight" : ""}`}
+                  onClick={() => handleSquareClick(i, j)}
+                >
+                  {piece && (
+                    <span className={isWhitePiece(piece) ? "white-piece" : "black-piece"}>
+                      {piece}
+                    </span>
+                  )}
+                </div>
+              );
+            })
+          )}
           </div>
 
           <button
@@ -298,20 +428,25 @@ const handleSquareClick = (row, col) => {
             Reset Game
           </button>
 
-          {gameStatus === "checkmate" && (
+
+            {gameStatus === "checkmate" && (
             <div className="mt-4 text-red-600 font-bold">
               Checkmate! {lastMoved === "white" ? "White" : "Black"} wins!
             </div>
           )}
+
+
           {gameStatus === "check" && (
             <div className="mt-4 text-yellow-600 font-bold">
               {turn === "white" ? "White" : "Black"} is in check!
             </div>
           )}
         </div>
-      </div>
+     </div>
 
-      <div className="captured-pieces flex flex-row justify-center space-x-2">
+
+        {/* White Captures - Bottom */}
+     <div className="captured-pieces flex flex-row justify-center space-x-2">
         {capturedWhite.map((p, idx) => (
           <span key={idx} className="text-xl">{p}</span>
         ))}
@@ -319,5 +454,7 @@ const handleSquareClick = (row, col) => {
     </div>
   );
 };
+
+
 
 export default ChessBoard;

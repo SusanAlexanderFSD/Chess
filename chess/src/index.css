@@ -73,5 +73,7 @@ body {
   font-size: 1.5rem;
 }
 
-
+.square.highlight {
+  background-color: rgba(0, 255, 0, 0.3); /* light green overlay */
+}
 
