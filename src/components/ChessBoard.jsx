@@ -136,7 +136,6 @@ const isValidMove = (piece, startRow, startCol, endRow, endCol, isWhite, board) 
     
     case "♔": case "♚": {
       if (Math.abs(dr) <= 1 && Math.abs(dc) <= 1) {
-        // Simulate the move
         const simulatedBoard = JSON.parse(JSON.stringify(board));
         simulatedBoard[endRow][endCol] = piece;
         simulatedBoard[startRow][startCol] = null;
@@ -146,14 +145,12 @@ const isValidMove = (piece, startRow, startCol, endRow, endCol, isWhite, board) 
           return true;
         }
       }
+      return false; // ✔️ king case ends here
+    }
+      default:
       return false;
     }
-    
-    
-    
   };
-};
- 
 
 
 const boardPathClear = (board, startRow, startCol, endRow, endCol, type) => {
@@ -381,99 +378,112 @@ const ChessBoard = () => {
 
 
   return (
-    <div className="flex flex-col items-center space-y-4">
-      {/* Black Captures - Top */}
-      <div className="captured-pieces flex flex-row justify-center space-x-2">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-green-900 text-white p-6">
+      {/* Captured Black Pieces - Top */}
+      <div className="captured-pieces flex flex-row justify-start space-x-2 mb-4 w-full max-w-5xl px-4">
         {capturedBlack.map((p, idx) => (
-          <span key={idx} className="text-xl">{p}</span>
+          <div key={idx} className="captured-piece">
+            <img
+              src={getPieceImage(p)}
+              alt={p}
+              className="captured-piece-image"
+            />
+          </div>
         ))}
       </div>
-
-
   
-      <div className="flex flex-row items-start space-x-8">
-        {/* Game Mode Selector */}
-        <div className="mb-4">
-          <label className="mr-2 font-semibold">Game Mode:</label>
-          <select
-            value={gameMode}
-            onChange={(e) => setGameMode(e.target.value)}
-            className="p-1 border rounded"
-          >
-
-
-            <option value="2P">2 Players</option>
-            <option value="vsComputer">Play vs Computer</option>
-          </select>
-       </div>
-
-
-  
-        {/* Board and Status */}
-
-        <div className="flex flex-col items-center space-y-4">
-          <div className="turn-indicator">Turn: {turn}</div>
-          <div className="chessboard">
+      {/* Game Layout: Chessboard + Sidebar */}
+      <div className="game-layout flex gap-10 items-start">
+        {/* Chessboard */}
+        <div className="chessboard">
           {board.map((row, i) =>
             row.map((piece, j) => {
               const isLight = (i + j) % 2 === 0;
               const isSelected = selected && selected.row === i && selected.col === j;
-              const isValidMoveSquare = validMoves.some(([r, c]) => r === i && c === j); // ✅ Add here
-
+              const isValidMoveSquare = validMoves.some(
+                ([r, c]) => r === i && c === j
+              );
+  
               return (
                 <div
                   key={`${i}-${j}`}
-                  className={`square ${isLight ? "light" : "dark"} ${isSelected ? "selected" : ""} ${isValidMoveSquare ? "highlight" : ""}`}
+                  className={`square ${isLight ? "light" : "dark"} ${
+                    isSelected ? "selected" : ""
+                  } ${isValidMoveSquare ? "highlight" : ""}`}
                   onClick={() => handleSquareClick(i, j)}
                 >
                   {piece && (
                     <img
-                    src={getPieceImage(piece)}
-                    alt={piece}
-                    className="piece-image"
-                  />
-                  
+                      src={getPieceImage(piece)}
+                      alt={piece}
+                      className="piece-image"
+                    />
                   )}
                 </div>
               );
             })
           )}
-          </div>
-
-          <button
-            onClick={resetGame}
-            className="mt-4 p-2 bg-blue-500 text-white rounded"
-          >
-            Reset Game
-          </button>
-
-
-            {gameStatus === "checkmate" && (
-            <div className="mt-4 text-red-600 font-bold">
-              Checkmate! {lastMoved === "white" ? "White" : "Black"} wins!
-            </div>
-          )}
-
-
-          {gameStatus === "check" && (
-            <div className="mt-4 text-yellow-600 font-bold">
-              {turn === "white" ? "White" : "Black"} is in check!
-            </div>
-          )}
         </div>
-     </div>
+  
+        {/* Sidebar Controls */}
+        <div className="sidebar flex flex-col items-start space-y-4 bg-green-800 p-6 rounded-xl shadow-lg">
+        <div className="game-mode-container">
+          <div>
+          <label className="game-mode-label">Game Mode:</label>
+            <select
+              value={gameMode}
+              onChange={(e) => setGameMode(e.target.value)}
+              className="game-mode-dropdown"
+            >
+              <option value="2P">2 Players</option>
+              <option value="vsComputer">Play vs Computer</option>
+            </select>
+          </div>
+          </div>
+  
+          <div className="turn-indicator">
+            Turn: {turn}
+          </div>
+  
+          <button
+              onClick={resetGame}
+              className="reset-button"
+            >
+              Reset Game
+            </button>
 
+  
+          {gameStatus === "checkmate" && (
+              <div className="banner banner-checkmate">
+                ♟️ Checkmate! {lastMoved === "white" ? "White" : "Black"} wins!
+              </div>
+            )}
 
-        {/* White Captures - Bottom */}
-     <div className="captured-pieces flex flex-row justify-center space-x-2">
+            {gameStatus === "check" && (
+              <div className="banner banner-check">
+                ⚠️ {turn === "white" ? "White" : "Black"} is in check!
+              </div>
+            )}
+
+        </div>
+      </div>
+  
+      {/* Captured White Pieces - Bottom */}
+      <div className="captured-pieces flex flex-row justify-end space-x-2 mt-4 w-full max-w-5xl px-4">
         {capturedWhite.map((p, idx) => (
-          <span key={idx} className="text-xl">{p}</span>
+          <div key={idx} className="captured-piece">
+            <img
+              src={getPieceImage(p)}
+              alt={p}
+              className="captured-piece-image"
+            />
+          </div>
         ))}
       </div>
     </div>
   );
+  
+  
 };
-
-
 
 export default ChessBoard;
